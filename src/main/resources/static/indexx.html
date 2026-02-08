@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Mars Rover Visual Controller</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f2f2f2;
+        }
+
+        .main {
+            display: flex;
+            justify-content: center;
+            margin-top: 40px;
+            gap: 40px;
+        }
+
+        /* GRID */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(10, 40px);
+            grid-template-rows: repeat(10, 40px);
+            gap: 2px;
+            background: #333;
+            padding: 5px;
+        }
+
+        .cell {
+            width: 40px;
+            height: 40px;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        /* CONTROL PANEL */
+        .panel {
+            background: white;
+            padding: 20px;
+            width: 300px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        input {
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 10px 15px;
+            margin: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .status {
+            margin-top: 15px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="main">
+
+    <!-- GRID -->
+    <div class="grid" id="grid"></div>
+
+    <!-- CONTROL PANEL -->
+    <div class="panel">
+        <h2>🚀 Mars Rover</h2>
+
+        <p>Commands: F, L, R</p>
+        <input type="text" id="commands" placeholder="FFRFL">
+
+        <br>
+        <button onclick="moveRover()">Move</button>
+        <button onclick="resetRover()">Reset</button>
+
+        <div class="status" id="status">Waiting...</div>
+    </div>
+
+</div>
+
+<script>
+    const gridSize = 10;
+    const grid = document.getElementById("grid");
+
+    function createGrid() {
+        grid.innerHTML = "";
+        for (let i = 0; i < gridSize * gridSize; i++) {
+            const cell = document.createElement("div");
+            cell.className = "cell";
+            grid.appendChild(cell);
+        }
+    }
+
+    function getArrow(direction) {
+        if (direction === "N") return "↑";
+        if (direction === "E") return "→";
+        if (direction === "S") return "↓";
+        if (direction === "W") return "←";
+    }
+
+    function drawRover(x, y, direction) {
+        createGrid();
+        const index = (gridSize - 1 - y) * gridSize + x;
+        grid.children[index].innerText = getArrow(direction);
+    }
+
+    function updateStatus(data) {
+        document.getElementById("status").innerText =
+            `X: ${data.x}, Y: ${data.y}, Direction: ${data.direction}`;
+        drawRover(data.x, data.y, data.direction);
+    }
+
+    function moveRover() {
+        const commands = document.getElementById("commands").value;
+
+        fetch(`/api/move?commands=${commands}`, { method: "POST" })
+            .then(res => res.json())
+            .then(updateStatus);
+    }
+
+    function resetRover() {
+        fetch(`/api/reset`, { method: "POST" })
+            .then(res => res.json())
+            .then(updateStatus);
+    }
+
+    // Load initial position
+    fetch(`/api/status`)
+        .then(res => res.json())
+        .then(updateStatus);
+</script>
+
+</body>
+</html>
